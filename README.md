@@ -1,3 +1,3 @@
 # SQL
-My SQL queries 
-This repository is dedicated to my experience in SQL - I will share queries created and verified by me. Databases come from my university, most of them consist of 3 tables and require at least basic knowledge of JOIN (Left, right, inner) to create correct query. 
+
+This repository contains a collection of SQL queries that I have created and verified through my experience using SQLite databases. As a student at Warsaw School of Economics, I have gained practical experience working with databases consisting of two to four tables, and have developed a solid understanding of JOINs, including left, right, and inner joins. The queries I will be sharing include SELECT, HAVING, GROUP BY, and ORDER BY statements. With this repository, I hope to share my knowledge and help others learn more about SQL and database management.
