@@ -1,0 +1,24 @@
+#Connect to chosen database
+con <- dbConnect(dbDriver("SQLite"), dbname="student_3.db")
+
+#As I was using SQLite - I uploaded SQLite library
+library("RSQLite")
+
+#I need to know what I am working with, so adding line, which will show me list of tables in the database
+dbListTables(con)
+
+
+#basic SQL commands and order they should be used in
+
+dbGetQuery(con, "SELECT
+           FROM
+           WHERE
+           GROUP BY
+           HAVING
+           ORDER BY
+           LIMIT")
+
+
+
+#always disconnect at the end
+dbDisconnect(con)
