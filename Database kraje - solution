@@ -1,0 +1,75 @@
+library("RSQLite")
+con <- dbConnect(dbDriver("SQLite"), dbname="kraje.db")
+
+# lista tabel
+dbListTables(con)
+
+kraj <- dbReadTable(con, "kraj")
+ludnosc <- dbReadTable(con, "ludnosc")
+
+
+dbGetQuery(con,  "SELECT 
+                  FROM 
+                  WHERE
+                  GROUP BY
+                  HAVING
+                  ORDER BY
+                  LIMIT")
+
+# g) [5 pkt.] Lista państw, których liczba ludności w roku 2017 według żadnego źródła nie przekracza 
+# średniej liczby ludności 10 najbardziej licznych państw w roku 2016 według Eurostatu
+
+dbGetQuery(con,  "SELECT id_kraju, ludnosc
+                  FROM ludnosc
+                  WHERE (LOWER(zrodlo) = 'eurostat') AND (rok = 2016)
+                  ORDER BY ludnosc DESC
+                  LIMIT 10")
+
+dbGetQuery(con,  "SELECT AVG(T.ludnosc) 
+                  FROM (SELECT id_kraju, ludnosc
+                  FROM ludnosc
+                  WHERE (LOWER(zrodlo) = 'eurostat') AND (rok = 2016)
+                  ORDER BY ludnosc DESC
+                  LIMIT 10) AS T")
+
+dbGetQuery(con,  "SELECT K.id_kraju, K.nazwa, MAX(L.ludnosc) AS najwiekszaludnosc
+                  FROM kraj K LEFT JOIN ludnosc L ON K.id_kraju = L.id_kraju
+                  WHERE L.rok = 2017
+                  GROUP BY K.id_kraju, K.nazwa
+                  HAVING najwiekszaludnosc <= 424
+                  LIMIT 10")
+
+dbGetQuery(con,  "SELECT K.id_kraju, K.nazwa, MAX(L.ludnosc) AS najwiekszaludnosc
+                  FROM kraj K LEFT JOIN ludnosc L ON K.id_kraju = L.id_kraju
+                  WHERE L.rok = 2017
+                  GROUP BY K.id_kraju, K.nazwa
+                  HAVING najwiekszaludnosc <= (SELECT AVG(T.ludnosc) 
+                    FROM (SELECT id_kraju, ludnosc
+                    FROM ludnosc
+                    WHERE (LOWER(zrodlo) = 'eurostat') AND (rok = 2016)
+                    ORDER BY ludnosc DESC
+                    LIMIT 10) AS T)
+                  LIMIT 10")
+
+
+# j) [5 pkt.] Lista państw uszeregowana rosnąco po nazwie, dla których liczba ludności w roku 2017 
+# wzrosła o co najmniej 2% w stosunku do roku 2016. Ograniczyć się do danych z Centralnej Agencji
+# Wywiadowczej.
+
+dbGetQuery(con,  "SELECT L1.id_kraju, L1.ludnosc, L2.id_kraju, L2.ludnosc
+                  FROM ludnosc L1 LEFT JOIN ludnosc L2 ON L1.id_kraju = L2.id_kraju
+                  WHERE L1.rok = 2016 AND L2.rok = 2017 AND
+                  LOWER(L1.zrodlo) = 'centralna agencja wywiadowcza' AND
+                  LOWER(L2.zrodlo) = 'centralna agencja wywiadowcza' AND
+                  (L2.ludnosc / L1.ludnosc - 1) > 0.02
+                  LIMIT 10")
+
+dbGetQuery(con,  "SELECT DISTINCT K.id_kraju, K.nazwa
+                  FROM kraj K LEFT JOIN ludnosc L ON K.id_kraju = L.id_kraju
+                  WHERE K.id_kraju IN (SELECT L1.id_kraju
+                    FROM ludnosc L1 LEFT JOIN ludnosc L2 ON L1.id_kraju = L2.id_kraju
+                    WHERE L1.rok = 2016 AND L2.rok = 2017 AND
+                    LOWER(L1.zrodlo) = 'centralna agencja wywiadowcza' AND
+                    LOWER(L2.zrodlo) = 'centralna agencja wywiadowcza' AND
+                    (L2.ludnosc / L1.ludnosc - 1) > 0.02)
+                  ORDER BY K.nazwa ASC")
