@@ -1,0 +1,79 @@
+# a) [5 pkt.] Liczba obywateli, których nazwiska są dłuższe niż 8 znaków, ale krótsze niż 12 znaków.
+# b) [5 pkt.] Liczba urodzeń obywateli w poszczególnych latach posortowana rosnąco po roku narodzin.
+# c) [5 pkt.] Ułożona alfabetycznie po imionach i nazwiskach lista obywateli, którzy urodzili się
+# w nieparzystych miesiącach (styczeń, marzec, maj, …, wrzesień, listopad), , a których nazwisko nie
+# kończy się literą ‘i’ ani ‘a’.
+# d) [5 pkt.] Największy, najmniejszy i średnia arytmetyczna numerów lokali w poszczególnych miastach.
+# Wyniki wyświetlić w kolumnach „miasto”, „największy numer” , „najmniejszy numer”, „średni 
+# numer”.
+# e) [5 pkt.] Lista (niepowtarzających się) par obywateli (pesel i nazwisko), którzy mieszkali w tym samym
+# mieście, uszeregowana malejąco po dacie urodzenia pierwszego obywatela z pary i rosnąco po dacie 
+# urodzenia drugiego obywatela z pary.
+# f) [5 pkt.] Posortowana rosnąco po nazwiskach lista męskich obywateli, którzy nigdy nie mieszkali
+# w Warszawie, a mieszkają przy ulicy o nazwie złożonej z co najmniej 3 wyrazów.
+# g) [5 pkt.] Lista mężczyzn (pesel, nazwisko, liczba meldowań), którzy meldowali się więcej razy niż 
+# połowa maksymalnej liczby meldowań wśród wszystkich obywateli.
+dbGetQuery(con,  "SELECT O.Pesel, O.Nazwisko, COUNT(A.id) AS ile
+                  FROM obywatel O LEFT JOIN adres A ON A.id_osoba = O.Id
+                  GROUP BY O.Pesel, O.Nazwisko
+                  ORDER BY ile DESC
+                  LIMIT 10")
+
+dbGetQuery(con,  "SELECT MAX(T.ile) AS najwiekszy FROM
+                  (SELECT O.Pesel, COUNT(A.id) AS ile
+                  FROM obywatel O LEFT JOIN adres A ON A.id_osoba = O.Id
+                  GROUP BY O.Pesel) AS T")
+
+dbGetQuery(con,  "SELECT O.Pesel, O.Nazwisko, COUNT(A.id) AS 'ile meldowań'
+                  FROM obywatel O LEFT JOIN adres A ON A.id_osoba = O.Id
+                  WHERE O.Plec = 'm'
+                  GROUP BY O.Pesel, O.Nazwisko
+                  HAVING COUNT(A.id) > 0.5*(SELECT MAX(T.ile) AS najwiekszy FROM
+                      (SELECT O.Pesel, COUNT(A.id) AS ile
+                      FROM obywatel O LEFT JOIN adres A ON A.id_osoba = O.Id
+                      GROUP BY O.Pesel) AS T)")
+# h) [5 pkt.] Alfabetycznie ułożona lista ulic wraz z liczbą mieszkających przy nich tych obywateli, których 
+# suma dwóch ostatnich cyfr numeru pesel jest parzysta.
+dbGetQuery(con,  "SELECT Data_urodzenia, SUBSTR(Data_urodzenia, 1, 4) AS rok
+                  FROM obywatel 
+                  WHERE SUBSTR(Data_urodzenia, 1, 4) < '1980'
+                  LIMIT 10")
+
+dbGetQuery(con,  "SELECT Data_urodzenia, SUBSTR(Data_urodzenia, 1, 4) AS rok
+                  FROM obywatel 
+                  WHERE 0+SUBSTR(Data_urodzenia, 1, 4) < 1980
+                  LIMIT 10")
+
+
+dbGetQuery(con,  "SELECT Data_urodzenia, SUBSTR(Data_urodzenia, 1, 4) AS rok,
+                  SUBSTR(Data_urodzenia, 6, 2) AS miesiac,
+                  SUBSTR(Data_urodzenia, 9, 2) AS dzien,
+                  SUBSTR(Data_urodzenia, 1, 4) || SUBSTR(Data_urodzenia, 6, 2) || SUBSTR(Data_urodzenia, 9, 2) AS nowadata
+                  FROM obywatel 
+                  LIMIT 10")
+
+dbGetQuery(con,  "SELECT MIN(T.nowadata) FROM
+                  (SELECT SUBSTR(Data_urodzenia, 1, 4) || SUBSTR(Data_urodzenia, 6, 2) || SUBSTR(Data_urodzenia, 9, 2) AS nowadata
+                  FROM obywatel) AS T")
+
+dbGetQuery(con,  "SELECT *
+                  FROM obywatel 
+                  WHERE SUBSTR(Data_urodzenia, 1, 4) || SUBSTR(Data_urodzenia, 6, 2) || SUBSTR(Data_urodzenia, 9, 2) = (SELECT MIN(T.nowadata) FROM
+                    (SELECT SUBSTR(Data_urodzenia, 1, 4) || SUBSTR(Data_urodzenia, 6, 2) || SUBSTR(Data_urodzenia, 9, 2) AS nowadata
+                    FROM obywatel) AS T)")
+
+
+dbGetQuery(con,  "SELECT Pesel, SUBSTR(Pesel, 10, 2) AS 'dwie ostatnie',
+                  SUBSTR(Pesel, 10, 1) AS przedostatnia,
+                  SUBSTR(Pesel, 11, 1) AS ostatnia,
+                  SUBSTR(Pesel, 10, 1) + SUBSTR(Pesel, 11, 1) AS suma,
+                  (SUBSTR(Pesel, 10, 1) + SUBSTR(Pesel, 11, 1)) % 2 AS reszta
+                  FROM obywatel 
+                  WHERE (SUBSTR(Pesel, 10, 1) + SUBSTR(Pesel, 11, 1)) % 2 = 0
+                  LIMIT 10")
+
+dbGetQuery(con,  "SELECT A.ulica, COUNT(DISTINCT A.id_osoba) AS ile
+                  FROM adres A LEFT JOIN obywatel O ON A.id_osoba = O.Id 
+                  WHERE (SUBSTR(Pesel, 10, 1) + SUBSTR(Pesel, 11, 1)) % 2 = 0
+                  GROUP BY A.ulica
+                  LIMIT 10")
